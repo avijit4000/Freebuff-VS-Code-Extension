@@ -1,0 +1,239 @@
+{
+  "name": "freebuff-code",
+  "displayName": "Freebuff Code",
+  "description": "VS Code chat panel and integrated-terminal launcher for the Freebuff coding agent",
+  "version": "1.0.1",
+  "publisher": "freebuff",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Programming Languages", "Other"],
+  "keywords": [
+    "AI",
+    "coding",
+    "chat",
+    "code assistant",
+    "freebuff",
+    "copilot",
+    "codex",
+    "claude",
+    "agent"
+  ],
+  "activationEvents": [
+    "onCommand:freebuffCode.startChat",
+    "onCommand:freebuffCode.toggleChat",
+    "onCommand:freebuffCode.openAgent",
+    "onView:freebuffCodeChat",
+    "onLanguage"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "freebuffCode.startChat",
+        "title": "Freebuff Code: Start Chat",
+        "category": "Freebuff Code",
+        "icon": "$(comment-bubble)"
+      },
+      {
+        "command": "freebuffCode.toggleChat",
+        "title": "Freebuff Code: Toggle Chat",
+        "category": "Freebuff Code"
+      },
+      {
+        "command": "freebuffCode.openAgent",
+        "title": "Freebuff Code: Open Agent in Terminal",
+        "category": "Freebuff Code",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "freebuffCode.clearChat",
+        "title": "Freebuff Code: Clear Chat",
+        "category": "Freebuff Code"
+      },
+      {
+        "command": "freebuffCode.copyLastResponse",
+        "title": "Freebuff Code: Copy Last Response",
+        "category": "Freebuff Code"
+      },
+      {
+        "command": "freebuffCode.applyCode",
+        "title": "Freebuff Code: Apply Code Change",
+        "category": "Freebuff Code"
+      },
+      {
+        "command": "freebuffCode.showDiff",
+        "title": "Freebuff Code: Show Diff Preview",
+        "category": "Freebuff Code"
+      },
+      {
+        "command": "freebuffCode.sendSelection",
+        "title": "Freebuff Code: Send Selection to Chat",
+        "category": "Freebuff Code"
+      },
+      {
+        "command": "freebuffCode.quickPrompt",
+        "title": "Freebuff Code: Quick Prompt",
+        "category": "Freebuff Code"
+      }
+    ],
+    "views": {
+      "freebuffCode": [
+        {
+          "id": "freebuffCodeChat",
+          "name": "Freebuff Code",
+          "icon": "$(comment-bubble)"
+        }
+      ]
+    },
+    "viewContainers": {
+      "activitybar": [
+        {
+          "id": "freebuffCode",
+          "title": "Freebuff Code",
+          "icon": "assets/icon-16.svg"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Freebuff Code",
+      "properties": {
+        "freebuffCode.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Freebuff API key for authentication"
+        },
+        "freebuffCode.baseUrl": {
+          "type": "string",
+          "default": "https://api.freebuff.com",
+          "description": "Freebuff API base URL"
+        },
+        "freebuffCode.defaultModel": {
+          "type": "string",
+          "default": "solar-pro",
+          "enum": [
+            "solar-pro",
+            "solar-mini",
+            "gpt-4",
+            "gpt-4-turbo",
+            "gpt-3.5-turbo",
+            "claude-3-opus",
+            "claude-3-sonnet",
+            "claude-3-haiku",
+            "claude-code"
+          ],
+          "description": "Default model to use for code generation"
+        },
+        "freebuffCode.temperature": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Temperature for response generation (0-2)"
+        },
+        "freebuffCode.maxTokens": {
+          "type": "number",
+          "default": 4096,
+          "minimum": 256,
+          "maximum": 8192,
+          "description": "Maximum tokens for response"
+        },
+        "freebuffCode.systemPrompt": {
+          "type": "string",
+          "default": "You are Freebuff Code, an expert coding assistant. Help the user with code development, debugging, refactoring, and explaining code. Provide clear, working code examples.",
+          "description": "System prompt for the AI assistant"
+        },
+        "freebuffCode.showPanel": {
+          "type": "boolean",
+          "default": false,
+          "description": "Open the chat panel automatically when the extension activates"
+        },
+        "freebuffCode.inlineSuggestions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable inline code suggestions"
+        },
+        "freebuffCode.quickActions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "Explain this code",
+            "Refactor this code",
+            "Add error handling",
+            "Write unit tests",
+            "Optimize this code"
+          ],
+          "description": "Quick action prompts for the chat"
+        },
+        "freebuffCode.useCli": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use Freebuff CLI instead of API (requires: npm install -g freebuff)"
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "freebuffCode.startChat",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "freebuffCode.copyLastResponse",
+          "when": "editorFocus",
+          "group": "navigation"
+        },
+        {
+          "command": "freebuffCode.sendSelection",
+          "when": "editorTextFocus && hasSelection",
+          "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "freebuffCode.toggleChat",
+          "when": "view == freebuffCodeChat",
+          "group": "navigation"
+        },
+        {
+          "command": "freebuffCode.openAgent",
+          "when": "view == freebuffCodeChat",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "freebuffCode.toggleChat",
+        "key": "ctrl+shift+i",
+        "mac": "cmd+shift+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "freebuffCode.sendSelection",
+        "key": "ctrl+shift+enter",
+        "mac": "cmd+shift+enter",
+        "when": "editorTextFocus && hasSelection"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.3.0",
+    "webpack": "^5.112.2",
+    "webpack-cli": "^4.10.0",
+    "webpack-extension-reloader": "^0.0.1"
+  }
+}

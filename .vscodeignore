@@ -1,0 +1,11 @@
+.vscode/**
+.gitignore
+**/*.map
+**/*.ts
+webpack.config.js
+tsconfig.json
+.eslintrc.json
+node_modules/**
+!.vscodeignore
+!assets/**
+!icon.svg

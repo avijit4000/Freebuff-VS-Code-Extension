@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freebuff Code Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--vscode-font-family);
+            background-color: var(--vscode-editor-background);
+            color: var(--vscode-editor-foreground);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header - Copilot style */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background-color: var(--vscode-titleBar-activeBackground);
+            border-bottom: 1px solid var(--vscode-widget-border);
+            gap: 12px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-logo {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .header-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--vscode-titleBar-activeForeground);
+            white-space: nowrap;
+        }
+
+        .model-selector {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .model-selector label {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            white-space: nowrap;
+        }
+
+        .model-dropdown {
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 11px;
+            min-width: 160px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .model-dropdown:focus {
+            border-color: var(--vscode-focusBorder);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .header-btn {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+
+        .header-btn:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+
+        .header-btn.active {
+            background-color: var(--vscode-button-background);
+            box-shadow: 0 0 0 2px var(--vscode-focusBorder);
+        }
+
+        .header-btn:active {
+            background-color: var(--vscode-button-background);
+        }
+
+        /* Chat Messages Area */
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
+        .message.assistant .message-avatar {
+            background-color: var(--vscode-note_background);
+            color: var(--vscode-noteForeground);
+        }
+
+        .message-content {
+            background-color: var(--vscode-widget-background);
+            border: 1px solid var(--vscode-widget-border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        .message-content pre {
+            background-color: var(--vscode-editor-background);
+            border-radius: 4px;
+            padding: 12px;
+            overflow-x: auto;
+            margin: 8px 0;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 12px;
+        }
+
+        .message-content code {
+            font-family: var(--vscode-editor-font-family);
+            font-size: 12px;
+        }
+
+        .message-content code.inline {
+            background-color: var(--vscode-symbolIcon.jsonBackgroundColor);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .message-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .message-content ul, .message-content ol {
+            margin: 8px 0;
+            padding-left: 24px;
+        }
+
+        .message-content li {
+            margin: 4px 0;
+        }
+
+        .message-content h1, .message-content h2, .message-content h3 {
+            margin: 12px 0 6px;
+            font-weight: 600;
+        }
+
+        .message-content h1 { font-size: 18px; }
+        .message-content h2 { font-size: 16px; }
+        .message-content h3 { font-size: 14px; }
+
+        .message-content blockquote {
+            border-left: 3px solid var(--vscode-editorInfo-foreground);
+            padding-left: 12px;
+            margin: 8px 0;
+            color: var(--vscode-editorInfo-foreground);
+        }
+
+        .message-meta {
+            font-size: 10px;
+            color: var(--vscode-descriptionForeground);
+            margin-top: 4px;
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Typing Indicator - Copilot style */
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            padding: 10px 14px;
+            background-color: var(--vscode-widget-background);
+            border: 1px solid var(--vscode-widget-border);
+            border-radius: 8px;
+        }
+
+        .typing-indicator.visible {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        .typing-text {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        /* Error Message */
+        .error-message {
+            display: none;
+            align-self: flex-start;
+            padding: 12px 16px;
+            background-color: var(--vscode-errorForeground);
+            color: var(--vscode-errorBackground);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        /* Input Area - Copilot style */
+        .input-area {
+            padding: 12px 16px;
+            background-color: var(--vscode-editor-background);
+            border-top: 1px solid var(--vscode-widget-border);
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .input-textarea {
+            width: 100%;
+            min-height: 40px;
+            max-height: 150px;
+            padding: 10px 14px;
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 8px;
+            font-family: var(--vscode-font-family);
+            font-size: 13px;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            line-height: 1.5;
+        }
+
+        .input-textarea:focus {
+            border-color: var(--vscode-focusBorder);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .input-textarea::placeholder {
+            color: var(--vscode-input-placeholderForeground);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 18px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            min-height: 40px;
+            min-width: 40px;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .send-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .welcome-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--vscode-titleBar-activeForeground);
+        }
+
+        .welcome-subtitle {
+            font-size: 14px;
+            color: var(--vscode-descriptionForeground);
+            margin-bottom: 24px;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        .welcome-features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-width: 400px;
+            width: 100%;
+            margin-bottom: 24px;
+        }
+
+        .feature-card {
+            background-color: var(--vscode-widget-background);
+            border: 1px solid var(--vscode-widget-border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .feature-title {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .feature-desc {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 16px;
+            background-color: var(--vscode-statusBar-background);
+            color: var(--vscode-statusBar-foreground);
+            font-size: 11px;
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-indicator {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: var(--vscode-statusBar-pullRequests-highlightBackground);
+        }
+
+        .status-indicator.connected {
+            background-color: var(--vscode-statusBar-foreground);
+        }
+
+        .status-indicator.disconnected {
+            background-color: var(--vscode#errorForeground);
+        }
+
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-text {
+            color: var(--vscode-statusBar-foreground);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--vscode-editor-background);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--vscode-widget-border);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--vscode-widget-border);
+        }
+
+        /* Copy button in messages */
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .message:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+
+        .message-content-wrapper {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header - Copilot style -->
+        <div class="header">
+            <div class="header-left">
+                <div class="header-logo">F</div>
+                <span class="header-title">Freebuff Code</span>
+            </div>
+            <div class="model-selector">
+                <label for="modelSelect">Model</label>
+                <select id="modelSelect" class="model-dropdown"></select>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" id="applyBtn" title="Apply Code from Response" style="display: none;">
+                    ✅ Apply
+                </button>
+                <button class="header-btn" id="clearBtn" title="Clear Chat">
+                    🗑️ Clear
+                </button>
+                <button class="header-btn" id="openAgentBtn" title="Open Freebuff in the integrated terminal">
+                    💻 Open Agent
+                </button>
+                <button class="header-btn" id="configBtn" title="Open Settings">
+                    ⚙️
+                </button>
+                <button class="header-btn" id="loginBtn" title="Login to Freebuff CLI" style="display: none;">
+                    🔐 Login
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area" id="chatArea">
+            <!-- Welcome Screen - Copilot style -->
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-logo">F</div>
+                <h1 class="welcome-title">Freebuff Code</h1>
+                <p class="welcome-subtitle">
+                    Your AI coding agent. Ask questions, get help with code, and develop faster.
+                </p>
+                <div class="welcome-quick-actions" id="quickActions">
+                    <button class="quick-action-btn" data-action="Explain this code">📖 Explain</button>
+                    <button class="quick-action-btn" data-action="Refactor this code">🔄 Refactor</button>
+                    <button class="quick-action-btn" data-action="Add error handling">🛡️ Error Handling</button>
+                    <button class="quick-action-btn" data-action="Write unit tests">🧪 Tests</button>
+                    <button class="quick-action-btn" data-action="Optimize this code">⚡ Optimize</button>
+                </div>
+                <p class="welcome-tip">
+                    Select text in your code and press <kbd>Ctrl+Shift+Enter</kbd> to send to chat
+                </p>
+            </div>
+
+            <!-- Messages will be inserted here -->
+            <div id="messagesContainer"></div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+                <span class="typing-text">Generating response...</span>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+
+        <!-- Input Area - Copilot style -->
+        <div class="input-area">
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea
+                        id="messageInput"
+                        class="input-textarea"
+                        placeholder="Ask me anything about code... (Ctrl+Shift+I to focus)"
+                        rows="1"
+                    ></textarea>
+                </div>
+                <button id="sendBtn" class="send-btn" disabled title="Send message">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M5 12l7-7 7 7"></path>
+                        <path d="M12 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <div class="status-indicator disconnected" id="statusIndicator"></div>
+                <span class="status-text" id="statusText">Not configured</span>
+            </div>
+            <div class="status-right">
+                <span class="status-text" id="modelStatus">Model: --</span>
+                <span class="status-text" id="cliStatus">CLI: Checking...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let config = {
+            hasApiKey: false,
+            defaultModel: 'solar-pro',
+            models: [],
+            temperature: 0.7,
+            maxTokens: 4096,
+            systemPrompt: '',
+            useCli: true
+        };
+
+        let currentModel = 'solar-pro';
+        let isProcessing = false;
+
+        // DOM Elements
+        const chatArea = document.getElementById('chatArea');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const configBtn = document.getElementById('configBtn');
+        const openAgentBtn = document.getElementById('openAgentBtn');
+        const loginBtn = document.getElementById('loginBtn');
+        const applyBtn = document.getElementById('applyBtn');
+        const modelSelect = document.getElementById('modelSelect');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const errorMessage = document.getElementById('errorMessage');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const modelStatus = document.getElementById('modelStatus');
+        const cliStatus = document.getElementById('cliStatus');
+        const modelSelector = document.querySelector('.model-selector');
+        const tokenStatus = document.getElementById('tokenStatus');
+
+        // Initialize
+        function init() {
+            populateModelDropdown();
+            setupEventListeners();
+        }
+
+        function populateModelDropdown() {
+            modelSelect.innerHTML = '';
+            config.models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.id;
+                option.textContent = `${model.name} (${model.provider})`;
+                if (model.id === currentModel) {
+                    option.selected = true;
+                }
+                modelSelect.appendChild(option);
+            });
+            modelSelect.onchange = (e) => {
+                currentModel = e.target.value;
+                modelStatus.textContent = `Model: ${getModelName(currentModel)}`;
+                // Notify extension of model change
+                vscode.postMessage({ command: 'changeModel', model: currentModel });
+            };
+        }
+
+        function getModelName(modelId) {
+            const model = config.models.find(m => m.id === modelId);
+            return model ? model.name : modelId;
+        }
+
+        function setupEventListeners() {
+            // Send button
+            sendBtn.addEventListener('click', sendMessage);
+
+            // Enter key (Shift+Enter for new line)
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Enable/disable send button based on input
+            messageInput.addEventListener('input', () => {
+                sendBtn.disabled = !messageInput.value.trim() || isProcessing;
+                // Auto-resize textarea
+                messageInput.style.height = 'auto';
+                messageInput.style.height = Math.min(messageInput.scrollHeight, 150) + 'px';
+            });
+
+            // Clear button
+            clearBtn.addEventListener('click', clearChat);
+
+            // Config button
+            configBtn.addEventListener('click', openSettings);
+
+            openAgentBtn.addEventListener('click', () => {
+                vscode.postMessage({ command: 'openAgent' });
+            });
+
+            // Login button
+            loginBtn.addEventListener('click', triggerLogin);
+
+            // Apply button
+            applyBtn.addEventListener('click', applyCode);
+
+            // Quick action buttons
+            document.querySelectorAll('.quick-action-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const action = btn.dataset.action;
+                    messageInput.value = action;
+                    messageInput.focus();
+                });
+            });
+
+            // Listen for messages from extension
+            window.addEventListener('message', handleMessage);
+        }
+
+        function handleMessage(event) {
+            const message = event.data;
+
+            switch (message.command) {
+                case 'configUpdated':
+                    config = message.config;
+                    updateStatusBar();
+                    // Re-populate dropdown in case models changed
+                    populateModelDropdown();
+                    break;
+                case 'messageResponse':
+                    hideTyping();
+                    isProcessing = false;
+                    sendBtn.disabled = !messageInput.value.trim();
+                    addMessage('assistant', message.text, message.model);
+                    break;
+                case 'sendMessage':
+                    messageInput.value = message.text;
+                    messageInput.dispatchEvent(new Event('input'));
+                    sendMessage();
+                    break;
+                case 'showTyping':
+                    showTyping();
+                    break;
+                case 'showError':
+                    hideTyping();
+                    isProcessing = false;
+                    sendBtn.disabled = !messageInput.value.trim();
+                    showError(message.text);
+                    break;
+                case 'clearChat':
+                    clearChatMessages();
+                    break;
+                case 'copyLastResponse':
+                    copyLastResponse();
+                    break;
+            }
+        }
+
+        function updateStatusBar() {
+            modelSelector.style.display = config.useCli ? 'none' : 'flex';
+            if (config.useCli && config.cliAvailable) {
+                statusIndicator.className = 'status-indicator connected';
+                statusText.textContent = 'Freebuff CLI Ready';
+                cliStatus.textContent = 'CLI: Active';
+                loginBtn.style.display = 'none';
+            } else if (!config.useCli && config.hasApiKey) {
+                statusIndicator.className = 'status-indicator connected';
+                statusText.textContent = 'API Connected';
+                cliStatus.textContent = 'API: Active';
+                loginBtn.style.display = 'none';
+            } else {
+                statusIndicator.className = 'status-indicator disconnected';
+                statusText.textContent = config.useCli ? 'Freebuff CLI not found' : 'API key required';
+                cliStatus.textContent = 'CLI: Not found';
+                loginBtn.style.display = config.useCli ? 'inline-flex' : 'none';
+            }
+            modelStatus.textContent = `Model: ${getModelName(currentModel)}`;
+        }
+
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text || isProcessing) return;
+
+            if (config.useCli) {
+                vscode.postMessage({ command: 'openAgent' });
+                showError('Freebuff is an interactive terminal agent. Your text remains here; type your prompt in the Freebuff Agent terminal.');
+                return;
+            }
+
+            isProcessing = true;
+            sendBtn.disabled = true;
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+
+            // Hide welcome screen
+            welcomeScreen.style.display = 'none';
+
+            // Add user message
+            addMessage('user', text);
+
+            // Send to extension
+            vscode.postMessage({ command: 'sendMessage', text: text });
+        }
+
+        let lastAssistantContent = '';
+
+        function addMessage(role, content, model = null) {
+            // Remove welcome screen if visible
+            if (welcomeScreen.style.display !== 'none') {
+                welcomeScreen.style.display = 'none';
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.style.animation = 'none';
+            messageDiv.offsetHeight; // Trigger reflow
+            messageDiv.style.animation = 'fadeIn 0.25s ease';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = role === 'user' ? '👤' : '🔮';
+
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'message-content-wrapper';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = formatContent(content);
+
+            // Store last assistant content for apply
+            if (role === 'assistant') {
+                lastAssistantContent = content;
+                applyBtn.style.display = 'flex';
+
+                // Copy button for assistant messages
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.textContent = '📋 Copy';
+                copyBtn.onclick = () => {
+                    navigator.clipboard.writeText(content);
+                    copyBtn.textContent = '✓ Copied';
+                    setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 2000);
+                };
+                contentWrapper.appendChild(copyBtn);
+            }
+
+            contentWrapper.appendChild(contentDiv);
+
+            // Meta info
+            const metaDiv = document.createElement('div');
+            metaDiv.className = 'message-meta';
+            if (role === 'user') {
+                metaDiv.textContent = `You · ${new Date().toLocaleTimeString()}`;
+            } else if (model) {
+                metaDiv.textContent = `${getModelName(model)} · ${new Date().toLocaleTimeString()}`;
+            }
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentWrapper);
+            messageDiv.appendChild(metaDiv);
+
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function applyCode() {
+            if (!lastAssistantContent) {
+                showError('No AI response to apply');
+                return;
+            }
+
+            // Extract code blocks and show apply options
+            const codeBlocks = extractCodeBlocksFromContent(lastAssistantContent);
+            if (codeBlocks.length === 0) {
+                showError('No code blocks found in the response');
+                return;
+            }
+
+            const options = codeBlocks.map((cb, i) => ({
+                label: cb.language || `Code Block ${i + 1}`,
+                description: cb.code.substring(0, 60) + (cb.code.length > 60 ? '...' : ''),
+                code: cb.code,
+                language: cb.language,
+                fileName: cb.fileName
+            }));
+
+            window.vscode?.postMessage({
+                command: 'showApplyOptions',
+                options: options
+            });
+        }
+
+        function extractCodeBlocksFromContent(htmlContent) {
+            const codeBlocks = [];
+            const preElements = htmlContent.querySelectorAll('pre');
+            
+            preElements.forEach(pre => {
+                const code = pre.textContent;
+                const lang = pre.querySelector('code')?.className?.replace('language-', '') || null;
+                // Try to infer file name from context (before the code block)
+                let fileName = null;
+                let sibling = pre.previousElementSibling;
+                while (sibling) {
+                    if (sibling.tagName === 'P' && sibling.textContent.includes('.')) {
+                        const match = sibling.textContent.match(/([\w.-]+\.\w+)/);
+                        if (match) {
+                            fileName = match[1];
+                            break;
+                        }
+                    }
+                    sibling = sibling.previousElementSibling;
+                }
+                codeBlocks.push({ code, language: lang, fileName });
+            });
+
+            return codeBlocks;
+        }
+
+        function formatContent(text) {
+            // Escape HTML
+            let html = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            // Code blocks with language
+            html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+                return `<pre><code class="language-${lang || ''}">${code.trim()}</code></pre>`;
+            });
+
+            // Inline code
+            html = html.replace(/`([^`]+)`/g, '<code class="inline">$1</code>');
+
+            // Headers
+            html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+            // Bold and italic
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+            // Blockquotes
+            html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+
+            // Lists
+            html = html.replace(/^\- (.+)$/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+            // Ordered lists
+            html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+
+            // Paragraphs (double newlines)
+            html = html.replace(/\n\n/g, '</p><p>');
+            html = '<p>' + html + '</p>';
+
+            // Clean up empty paragraphs
+            html = html.replace(/<p><\/p>/g, '');
+
+            return html;
+        }
+
+        function scrollToBottom() {
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function showTyping() {
+            typingIndicator.classList.add('visible');
+            errorMessage.classList.remove('visible');
+            scrollToBottom();
+        }
+
+        function hideTyping() {
+            typingIndicator.classList.remove('visible');
+        }
+
+        function showError(text) {
+            errorMessage.textContent = text;
+            errorMessage.classList.add('visible');
+            scrollToBottom();
+            setTimeout(() => {
+                errorMessage.classList.remove('visible');
+            }, 10000);
+        }
+
+        function clearChat() {
+            if (confirm('Clear the entire chat history?')) {
+                messagesContainer.innerHTML = '';
+                welcomeScreen.style.display = 'flex';
+                vscode.postMessage({ command: 'clearChat' });
+            }
+        }
+
+        function clearChatMessages() {
+            messagesContainer.innerHTML = '';
+            welcomeScreen.style.display = 'flex';
+        }
+
+        function openSettings() {
+            vscode.postMessage({ command: 'getConfig' });
+            // Open settings panel
+            const settingsUrl = 'vscode:settings/edit?name=freebuffCode.apiKey';
+            // Use command to open settings
+            vscode.postMessage({ command: 'openSettings' });
+        }
+
+        function copyLastResponse() {
+            const assistantMessages = messagesContainer.querySelectorAll('.message.assistant .message-content');
+            if (assistantMessages.length > 0) {
+                const lastMessage = assistantMessages[assistantMessages.length - 1];
+                const text = lastMessage.textContent;
+                navigator.clipboard.writeText(text);
+                vscode.postMessage({ command: 'copyResponse', text: text });
+            }
+        }
+
+        function triggerLogin() {
+            // Open terminal and run freebuff login
+            vscode.postMessage({ command: 'triggerLogin' });
+            showError('Opening terminal for login... Run: freebuff login');
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
